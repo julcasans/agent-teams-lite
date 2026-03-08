@@ -101,7 +101,8 @@ get_tool_path() {
                 *)        echo "$HOME/.codex/skills" ;;
             esac
             ;;
-        vscode)      echo "./.vscode/skills" ;;
+        vscode)       echo "./.github/skills" ;;
+        copilot-cli)  echo "./.github/skills" ;;
         antigravity)
             case "$OS" in
                 windows)  echo "$USERPROFILE/.gemini/antigravity/skills" ;;
@@ -174,7 +175,7 @@ show_help() {
     echo "  --path DIR      Custom install path (use with --agent custom)"
     echo "  -h, --help      Show this help"
     echo ""
-    echo "Agents: claude-code, opencode, gemini-cli, codex, vscode, antigravity, cursor, project-local, all-global"
+    echo "Agents: claude-code, opencode, gemini-cli, codex, vscode, copilot-cli, antigravity, cursor, project-local, all-global"
 }
 
 # ============================================================================
@@ -306,6 +307,8 @@ install_for_agent() {
         gemini-cli)
             install_skills "$(get_tool_path gemini-cli)" "Gemini CLI"
             print_next_step "~/.gemini/GEMINI.md" "examples/gemini-cli/GEMINI.md"
+            echo -e "  ${YELLOW}Required:${NC} Set ${BOLD}GEMINI_SYSTEM_MD=1${NC} so Gemini CLI loads the system prompt:"
+            echo -e "    ${CYAN}echo 'export GEMINI_SYSTEM_MD=1' >> ~/.gemini/.env${NC}"
             ;;
         codex)
             install_skills "$(get_tool_path codex)" "Codex"
@@ -314,7 +317,23 @@ install_for_agent() {
         vscode)
             install_skills "$(get_tool_path vscode)" "VS Code (Copilot)"
             print_next_step ".github/copilot-instructions.md" "examples/vscode/copilot-instructions.md"
-            echo -e "  ${YELLOW}Note:${NC} Skills installed in current project (.vscode/skills/)"
+            echo -e "  ${YELLOW}Note:${NC} Skills installed in current project (.github/skills/)"
+            ;;
+        copilot-cli)
+            install_skills "$(get_tool_path copilot-cli)" "GitHub Copilot CLI"
+            # Install Engram memory protocol as modular instruction file
+            local engram_src="$REPO_DIR/.github/instructions/engram.instructions.md"
+            local engram_target="./.github/instructions/engram.instructions.md"
+            if [ -f "$engram_src" ]; then
+                mkdir -p "./.github/instructions"
+                cp "$engram_src" "$engram_target"
+                print_skill "engram.instructions.md → .github/instructions/"
+            else
+                print_warn "engram.instructions.md not found in source — skipping"
+            fi
+            print_next_step ".github/copilot-instructions.md" "examples/copilot-cli/copilot-instructions.md"
+            echo -e "  ${YELLOW}Tip:${NC} Copy ${CYAN}examples/copilot-cli/AGENTS.md${NC} to project root for auto-discovery"
+            echo -e "  ${YELLOW}Note:${NC} Uses /fleet for parallel sub-agent phases — full sub-agent support!"
             ;;
         antigravity)
             target="$(get_tool_path antigravity)"
@@ -336,13 +355,15 @@ install_for_agent() {
             install_skills "$(get_tool_path gemini-cli)" "Gemini CLI"
             install_skills "$(get_tool_path codex)" "Codex"
             install_skills "$(get_tool_path cursor)" "Cursor"
+            install_skills "$(get_tool_path antigravity)" "Antigravity"
             echo -e "\n${YELLOW}Next steps:${NC}"
             echo -e "  1. Add orchestrator to ${BOLD}~/.claude/CLAUDE.md${NC}"
             echo -e "  2. ${YELLOW}${BOLD}[REQUIRED]${NC} Add orchestrator agent to ${BOLD}~/.config/opencode/opencode.json${NC}"
             echo -e "     ${YELLOW}See: examples/opencode/opencode.json — without this, /sdd-* commands won't work${NC}"
-            echo -e "  3. Add orchestrator to ${BOLD}~/.gemini/GEMINI.md${NC}"
+            echo -e "  3. Add orchestrator to ${BOLD}~/.gemini/GEMINI.md${NC} and set ${BOLD}GEMINI_SYSTEM_MD=1${NC} in ~/.gemini/.env"
             echo -e "  4. Add orchestrator to ${BOLD}Codex instructions file${NC}"
             echo -e "  5. Add SDD rules to ${BOLD}.cursorrules${NC}"
+            echo -e "  6. Add orchestrator to ${BOLD}~/.gemini/GEMINI.md${NC} (Antigravity uses same config)"
             ;;
         custom)
             if [[ -z "${CUSTOM_PATH:-}" ]]; then
@@ -365,18 +386,19 @@ install_for_agent() {
 
 interactive_menu() {
     echo -e "${BOLD}Select your AI coding assistant:${NC}\n"
-    echo "  1) Claude Code    ($(get_tool_path claude-code))"
-    echo "  2) OpenCode       ($(get_tool_path opencode))"
-    echo "  3) Gemini CLI     ($(get_tool_path gemini-cli))"
-    echo "  4) Codex          ($(get_tool_path codex))"
-    echo "  5) VS Code        ($(get_tool_path vscode))"
-    echo "  6) Antigravity    (~/.gemini/antigravity/skills/)"
-    echo "  7) Cursor         ($(get_tool_path cursor))"
-    echo "  8) Project-local  ($(get_tool_path project-local))"
-    echo "  9) All global     (Claude Code + OpenCode + Gemini CLI + Codex + Cursor)"
-    echo "  10) Custom path"
+    echo "  1) Claude Code         ($(get_tool_path claude-code))"
+    echo "  2) OpenCode            ($(get_tool_path opencode))"
+    echo "  3) Gemini CLI          ($(get_tool_path gemini-cli))"
+    echo "  4) Codex               ($(get_tool_path codex))"
+    echo "  5) VS Code             ($(get_tool_path vscode))"
+    echo "  6) GitHub Copilot CLI  ($(get_tool_path copilot-cli)) + /fleet support"
+    echo "  7) Antigravity         (~/.gemini/antigravity/skills/)"
+    echo "  8) Cursor              ($(get_tool_path cursor))"
+    echo "  9) Project-local       ($(get_tool_path project-local))"
+    echo "  10) All global         (Claude Code + OpenCode + Gemini CLI + Codex + Cursor + Antigravity)"
+    echo "  11) Custom path"
     echo ""
-    read -rp "Choice [1-10]: " choice
+    read -rp "Choice [1-11]: " choice
 
     case $choice in
         1)  install_for_agent "claude-code" ;;
@@ -384,11 +406,12 @@ interactive_menu() {
         3)  install_for_agent "gemini-cli" ;;
         4)  install_for_agent "codex" ;;
         5)  install_for_agent "vscode" ;;
-        6)  install_for_agent "antigravity" ;;
-        7)  install_for_agent "cursor" ;;
-        8)  install_for_agent "project-local" ;;
-        9)  install_for_agent "all-global" ;;
-        10) install_for_agent "custom" ;;
+        6)  install_for_agent "copilot-cli" ;;
+        7)  install_for_agent "antigravity" ;;
+        8)  install_for_agent "cursor" ;;
+        9)  install_for_agent "project-local" ;;
+        10) install_for_agent "all-global" ;;
+        11) install_for_agent "custom" ;;
         *)
             print_error "Invalid choice"
             exit 1

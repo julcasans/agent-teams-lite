@@ -21,10 +21,10 @@ From the orchestrator:
 
 ## Execution and Persistence Contract
 
-Read and follow `skills/_shared/persistence-contract.md` for mode resolution rules.
+Read and follow `_shared/persistence-contract.md` (located in the `_shared/` directory alongside these skill files) for mode resolution rules.
 
-- If mode is `engram`: Read and follow `skills/_shared/engram-convention.md`. Artifact type: `spec`. Retrieve `proposal` as dependency. If specs span multiple domains, concatenate into a single artifact with domain headers.
-- If mode is `openspec`: Read and follow `skills/_shared/openspec-convention.md`.
+- If mode is `engram`: Read and follow `_shared/engram-convention.md`. Artifact type: `spec`. Retrieve `proposal` as dependency. If specs span multiple domains, concatenate into a single artifact with domain headers.
+- If mode is `openspec`: Read and follow `_shared/openspec-convention.md`.
 - If mode is `none`: Return result only. Never create or modify project files.
 
 ## What to Do

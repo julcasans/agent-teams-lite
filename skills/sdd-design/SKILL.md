@@ -21,10 +21,11 @@ From the orchestrator:
 
 ## Execution and Persistence Contract
 
-Read and follow `skills/_shared/persistence-contract.md` for mode resolution rules.
+Read and follow `_shared/persistence-contract.md` (located in the `_shared/` directory alongside these skill files) for mode resolution rules.
 
-- If mode is `engram`: Read and follow `skills/_shared/engram-convention.md`. Artifact type: `design`. Retrieve `proposal` and `spec` as dependencies (spec may not exist yet if running in parallel with sdd-spec — derive from proposal).
-- If mode is `openspec`: Read and follow `skills/_shared/openspec-convention.md`.
+- If mode is `engram`: Read and follow `_shared/engram-convention.md`. Artifact type: `design`. Retrieve `proposal` and `spec` as dependencies.
+  > **Parallel execution note:** If `spec` does not yet exist (running in parallel with `sdd-spec`), derive the design from the `proposal` alone. Acknowledge this limitation in the design's "Open Questions" section and recommend the orchestrator re-run or review design against spec once spec is complete. For strongest output, run `sdd-spec` first, then `sdd-design` sequentially.
+- If mode is `openspec`: Read and follow `_shared/openspec-convention.md`. Read `specs/` directory; if empty (parallel run), note this in "Open Questions" and recommend sequential re-run.
 - If mode is `none`: Return result only. Never create or modify project files.
 
 ## What to Do

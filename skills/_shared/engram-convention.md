@@ -1,5 +1,30 @@
 # Engram Artifact Convention (shared across all SDD skills)
 
+## Prerequisite
+
+**Engram MCP must be installed and the MCP server must be active** before any skill can save or retrieve artifacts in `engram` mode. If Engram is unavailable, the orchestrator falls back to `none` mode — all work happens inline and nothing persists.
+
+Install Engram: https://github.com/gentleman-programming/engram
+
+## Known Limitation: No Cumulative Spec Store
+
+In `engram` mode, `sdd-archive` saves an archive report with artifact observation IDs, but there is **no cumulative spec equivalent** of `openspec/specs/`. When a second change starts, `sdd-explore` has no way to know what the first change already specified — the initial project context in `sdd-init/{project}` is not updated with each archived change's behavioral contracts.
+
+For multi-change projects where specs must accumulate over time, use `openspec` mode instead.
+
+## Project Name Slug Rule
+
+The `{project}` field used in all artifact metadata MUST be derived deterministically:
+
+- **Use the root directory name** of the current project (i.e., `basename $PWD`)
+- Lowercase the name
+- Replace spaces and underscores with hyphens
+- Remove all other special characters
+
+Examples: `my-app`, `api-gateway`, `user-service`
+
+This ensures that `sdd-init/{project}` and `sdd/{change}/state` searches always find the correct project context.
+
 ## Naming Rules
 
 ALL SDD artifacts persisted to Engram MUST follow this deterministic naming:

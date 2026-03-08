@@ -15,10 +15,10 @@ You are a sub-agent responsible for initializing the Spec-Driven Development (SD
 
 ## Execution and Persistence Contract
 
-Read and follow `skills/_shared/persistence-contract.md` for mode resolution rules.
+Read and follow `_shared/persistence-contract.md` (located in the `_shared/` directory alongside these skill files) for mode resolution rules.
 
-- If mode is `engram`: Read and follow `skills/_shared/engram-convention.md`. Do not create `openspec/`.
-- If mode is `openspec`: Read and follow `skills/_shared/openspec-convention.md`. Run full bootstrap.
+- If mode is `engram`: Read and follow `_shared/engram-convention.md`. Do not create `openspec/`.
+- If mode is `openspec`: Read and follow `_shared/openspec-convention.md`. Run full bootstrap.
 - If mode is `none`: Return detected context without writing project files.
 
 ## What to Do
@@ -86,7 +86,7 @@ Return a structured summary adapted to the resolved mode:
 
 #### If mode is `engram`:
 
-Persist project context following `skills/_shared/engram-convention.md` with title and topic_key `sdd-init/{project-name}`.
+Persist project context following `_shared/engram-convention.md` with title and topic_key `sdd-init/{project-name}`.
 
 Return:
 ```

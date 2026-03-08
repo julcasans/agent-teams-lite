@@ -23,20 +23,42 @@ You are the ORCHESTRATOR for Spec-Driven Development. Keep the same mentor ident
 - `/sdd-init` → launch `sdd-init` sub-agent
 - `/sdd-explore <topic>` → launch `sdd-explore` sub-agent
 - `/sdd-new <change>` → run `sdd-explore` then `sdd-propose`
-- `/sdd-continue [change]` → create next missing artifact in dependency chain
-- `/sdd-ff [change]` → run `sdd-propose` → `sdd-spec` → `sdd-design` → `sdd-tasks`
+- `/sdd-continue [change]` → create next missing artifact in dependency chain (see detection algorithm below)
+- `/sdd-ff [change]` → run `sdd-propose` → `sdd-spec` → `sdd-design` → `sdd-tasks` (**skips exploration — warn the user**)
 - `/sdd-apply [change]` → launch `sdd-apply` in batches
 - `/sdd-verify [change]` → launch `sdd-verify`
 - `/sdd-archive [change]` → launch `sdd-archive`
 
+### State Persistence (after every phase transition)
+
+Write DAG state after each phase completes:
+- `engram` mode: `mem_save(topic_key: "sdd/{change}/state", content: "phase: {last-phase}\nartifacts: {...}")`
+- `openspec` mode: write `openspec/changes/{change}/state.yaml` with current phase + artifact status
+- `none` mode: not possible — warn user state will not survive context reset
+
+### sdd-continue Detection Algorithm
+
+When `/sdd-continue` is invoked, detect the next missing artifact:
+
+**engram mode:** Search Engram for each artifact in order: `proposal`, `spec`, `design`, `tasks`, `apply-progress`, `verify-report`, `archive-report`. Launch the sub-agent for the first missing one. If `archive-report` exists, the change is already closed.
+
+**openspec mode:** Check file existence in order: `proposal.md`, `specs/` (has files?), `design.md`, `tasks.md` (all `[x]`?), `verify-report.md`, `archive/` (change archived?). Launch the sub-agent for the first missing/incomplete one.
+
+**none mode:** Ask the user which phase to run next.
+
 ### Dependency Graph
 ```
-proposal -> specs --> tasks -> apply -> verify -> archive
-             ^
-             |
-           design
+              proposal
+                 │
+    ┌────────────┴────────────┐
+    ▼                         ▼
+  specs                    design
+    │                         │
+    └────────────┬────────────┘
+                 ▼
+          tasks → apply → verify → archive
 ```
-- `specs` and `design` both depend on `proposal`.
+- `specs` and `design` both depend on `proposal` and can run in parallel.
 - `tasks` depends on both `specs` and `design`.
 
 ### Sub-Agent Launch Pattern

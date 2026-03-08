@@ -22,18 +22,20 @@ From the orchestrator:
 
 ## Execution and Persistence Contract
 
-Read and follow `skills/_shared/persistence-contract.md` for mode resolution rules.
+Read and follow `_shared/persistence-contract.md` (located in the `_shared/` directory alongside these skill files) for mode resolution rules.
 
-- If mode is `engram`: Read and follow `skills/_shared/engram-convention.md`. Artifact type: `proposal`. Retrieve `explore` and `sdd-init/{project}` as dependencies.
-- If mode is `openspec`: Read and follow `skills/_shared/openspec-convention.md`.
+- If mode is `engram`: Read and follow `_shared/engram-convention.md`. Artifact type: `proposal`. Retrieve `explore` and `sdd-init/{project}` as dependencies.
+- If mode is `openspec`: Read and follow `_shared/openspec-convention.md`.
 - If mode is `none`: Return result only. Never create or modify project files.
 - Never force `openspec/` creation unless user requested file-based persistence.
 
 ## What to Do
 
-### Step 1: Create Change Directory
+### Step 1: Create Change Directory (openspec mode only)
 
-Create the change folder structure:
+**If mode is `engram`:** Skip this step — the artifact will be saved to Engram per the Execution Contract above. Proceed to Step 2.
+
+**If mode is `openspec`:** Create the change folder structure:
 
 ```
 openspec/changes/{change-name}/

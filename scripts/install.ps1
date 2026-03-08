@@ -22,7 +22,7 @@
 
 [CmdletBinding()]
 param(
-    [ValidateSet('claude-code', 'opencode', 'gemini-cli', 'codex', 'vscode',
+    [ValidateSet('claude-code', 'opencode', 'gemini-cli', 'codex', 'vscode', 'copilot-cli',
                  'antigravity', 'cursor', 'project-local', 'all-global', 'custom')]
     [string]$Agent,
     [string]$Path,
@@ -45,7 +45,8 @@ $ToolPaths = @{
     'opencode-commands' = Join-Path $env:APPDATA 'opencode\commands'
     'gemini-cli'        = Join-Path $env:USERPROFILE '.gemini\skills'
     'codex'             = Join-Path $env:USERPROFILE '.codex\skills'
-    'vscode'            = Join-Path '.' '.vscode\skills'
+    'vscode'            = Join-Path '.' '.github\skills'
+    'copilot-cli'       = Join-Path '.' '.github\skills'
     'antigravity'       = Join-Path $env:USERPROFILE '.gemini\antigravity\skills'
     'cursor'            = Join-Path $env:USERPROFILE '.cursor\skills'
     'project-local'     = Join-Path '.' 'skills'
@@ -266,6 +267,11 @@ function Install-ForAgent {
         'gemini-cli' {
             Install-Skills -TargetDir $ToolPaths['gemini-cli'] -ToolName 'Gemini CLI'
             Write-NextStep '~\.gemini\GEMINI.md' 'examples\gemini-cli\GEMINI.md'
+            Write-Host '  Required: ' -ForegroundColor Yellow -NoNewline
+            Write-Host 'Set GEMINI_SYSTEM_MD=1 so Gemini CLI loads the system prompt:'
+            Write-Host '    Add ' -NoNewline
+            Write-Host 'GEMINI_SYSTEM_MD=1' -ForegroundColor Cyan -NoNewline
+            Write-Host ' to ~\.gemini\.env'
         }
         'codex' {
             Install-Skills -TargetDir $ToolPaths['codex'] -ToolName 'Codex'
@@ -274,7 +280,24 @@ function Install-ForAgent {
         'vscode' {
             Install-Skills -TargetDir $ToolPaths['vscode'] -ToolName 'VS Code (Copilot)'
             Write-NextStep '.github\copilot-instructions.md' 'examples\vscode\copilot-instructions.md'
-            Write-Warn 'Skills installed in current project (.vscode\skills\)'
+            Write-Warn 'Skills installed in current project (.github\skills\)'
+        }
+        'copilot-cli' {
+            Install-Skills -TargetDir $ToolPaths['copilot-cli'] -ToolName 'GitHub Copilot CLI'
+            # Install Engram memory protocol as modular instruction file
+            $engramSrc = Join-Path $RepoDir '.github\instructions\engram.instructions.md'
+            $engramTarget = Join-Path '.' '.github\instructions\engram.instructions.md'
+            $engramTargetDir = Split-Path $engramTarget -Parent
+            if (Test-Path $engramSrc) {
+                New-Item -ItemType Directory -Path $engramTargetDir -Force | Out-Null
+                Copy-Item -Path $engramSrc -Destination $engramTarget -Force
+                Write-Skill "engram.instructions.md -> .github\instructions\"
+            } else {
+                Write-Warn 'engram.instructions.md not found in source - skipping'
+            }
+            Write-NextStep '.github\copilot-instructions.md' 'examples\copilot-cli\copilot-instructions.md'
+            Write-Warn 'Tip: Copy examples\copilot-cli\AGENTS.md to project root for auto-discovery'
+            Write-Warn 'Uses /fleet for parallel sub-agent phases - full sub-agent support!'
         }
         'antigravity' {
             Install-Skills -TargetDir $ToolPaths['antigravity'] -ToolName 'Antigravity'
@@ -296,6 +319,7 @@ function Install-ForAgent {
             Install-Skills -TargetDir $ToolPaths['gemini-cli'] -ToolName 'Gemini CLI'
             Install-Skills -TargetDir $ToolPaths['codex'] -ToolName 'Codex'
             Install-Skills -TargetDir $ToolPaths['cursor'] -ToolName 'Cursor'
+            Install-Skills -TargetDir $ToolPaths['antigravity'] -ToolName 'Antigravity'
             Write-Host ''
             Write-Host 'Next steps:' -ForegroundColor Yellow
             Write-Host '  1. Add orchestrator to ' -NoNewline
@@ -307,10 +331,12 @@ function Install-ForAgent {
             Write-Host '     See: examples\opencode\opencode.json — without this, /sdd-* commands will not work' -ForegroundColor Yellow
             Write-Host '  3. Add orchestrator to ' -NoNewline
             Write-Host '~\.gemini\GEMINI.md' -ForegroundColor White
+            Write-Host '     Set GEMINI_SYSTEM_MD=1 in ~\.gemini\.env' -ForegroundColor Yellow
             Write-Host '  4. Add orchestrator to ' -NoNewline
             Write-Host 'Codex instructions file' -ForegroundColor White
             Write-Host '  5. Add SDD rules to ' -NoNewline
             Write-Host '.cursorrules' -ForegroundColor White
+            Write-Host '  6. Add orchestrator to ~\.gemini\GEMINI.md (Antigravity uses same config)' -ForegroundColor White
         }
         'custom' {
             $customPath = $Path
@@ -339,19 +365,20 @@ function Install-ForAgent {
 function Show-Menu {
     Write-Host 'Select your AI coding assistant:' -ForegroundColor White
     Write-Host ''
-    Write-Host "   1) Claude Code    ($($ToolPaths['claude-code']))"
-    Write-Host "   2) OpenCode       ($($ToolPaths['opencode']))"
-    Write-Host "   3) Gemini CLI     ($($ToolPaths['gemini-cli']))"
-    Write-Host "   4) Codex          ($($ToolPaths['codex']))"
-    Write-Host "   5) VS Code        ($($ToolPaths['vscode']))"
-    Write-Host "   6) Antigravity    ($($ToolPaths['antigravity']))"
-    Write-Host "   7) Cursor         ($($ToolPaths['cursor']))"
-    Write-Host "   8) Project-local  ($($ToolPaths['project-local']))"
-    Write-Host '   9) All global     (Claude Code + OpenCode + Gemini CLI + Codex + Cursor)'
-    Write-Host '  10) Custom path'
+    Write-Host "   1) Claude Code         ($($ToolPaths['claude-code']))"
+    Write-Host "   2) OpenCode            ($($ToolPaths['opencode']))"
+    Write-Host "   3) Gemini CLI          ($($ToolPaths['gemini-cli']))"
+    Write-Host "   4) Codex               ($($ToolPaths['codex']))"
+    Write-Host "   5) VS Code             ($($ToolPaths['vscode']))"
+    Write-Host "   6) GitHub Copilot CLI  ($($ToolPaths['copilot-cli'])) + /fleet support"
+    Write-Host "   7) Antigravity         ($($ToolPaths['antigravity']))"
+    Write-Host "   8) Cursor              ($($ToolPaths['cursor']))"
+    Write-Host "   9) Project-local       ($($ToolPaths['project-local']))"
+    Write-Host '  10) All global          (Claude Code + OpenCode + Gemini CLI + Codex + Cursor + Antigravity)'
+    Write-Host '  11) Custom path'
     Write-Host ''
 
-    $choice = Read-Host 'Choice [1-10]'
+    $choice = Read-Host 'Choice [1-11]'
 
     $agentMap = @{
         '1'  = 'claude-code'
@@ -359,11 +386,12 @@ function Show-Menu {
         '3'  = 'gemini-cli'
         '4'  = 'codex'
         '5'  = 'vscode'
-        '6'  = 'antigravity'
-        '7'  = 'cursor'
-        '8'  = 'project-local'
-        '9'  = 'all-global'
-        '10' = 'custom'
+        '6'  = 'copilot-cli'
+        '7'  = 'antigravity'
+        '8'  = 'cursor'
+        '9'  = 'project-local'
+        '10' = 'all-global'
+        '11' = 'custom'
     }
 
     if ($agentMap.ContainsKey($choice)) {

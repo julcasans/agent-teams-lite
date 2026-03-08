@@ -275,6 +275,8 @@ openspec/
 
 ## Quick Start
 
+> **Prerequisites:** The recommended mode is `engram`, which requires the [Engram MCP server](https://github.com/gentleman-programming/engram) to be installed and active in your tool. Without it, the system silently falls back to `none` — nothing persists and recovery after context compaction is not possible. **Install Engram before proceeding**, or use `openspec` mode as a file-based fallback.
+
 ### 1. Install the skills
 
 ```bash
@@ -414,6 +416,7 @@ Dedicated setup guides for all supported tools:
 
 - [Claude Code](#claude-code) — Full sub-agent support via Task tool
 - [OpenCode](#opencode) — Full sub-agent support via Task tool
+- [GitHub Copilot CLI](#github-copilot-cli) — Full sub-agent support via `/fleet` command
 - [Gemini CLI](#gemini-cli) — Inline skill execution
 - [Codex](#codex) — Inline skill execution
 - [VS Code (Copilot)](#vs-code-copilot) — Agent mode with context files
@@ -543,46 +546,91 @@ Open Codex and type `/sdd-init`.
 
 ### VS Code (Copilot)
 
-VS Code supports MCP and custom instructions natively. The skills work with Copilot's agent mode and any MCP-compatible extension.
+VS Code Copilot supports agent mode with skill files. Skills are read by the agent as context files. Note: VS Code does not support the Task tool so phases run inline (no fresh-context sub-agents).
 
-**1. Copy skills to workspace:**
+**1. Install skills:**
 
 ```bash
-# Per-project (recommended)
-cp -r skills/_shared skills/sdd-* ./your-project/.vscode/skills/
-
-# Or using the install script
-./scripts/install.sh  # Choose VS Code option
+./scripts/install.sh  # Choose option 5 — VS Code
 ```
+
+This copies skills to `.github/skills/` in your current project directory.
 
 **2. Add orchestrator instructions:**
 
-Create a VS Code `.instructions.md` file in the User prompts folder and append the orchestrator instructions from [`examples/vscode/copilot-instructions.md`](examples/vscode/copilot-instructions.md).
+Create `.github/copilot-instructions.md` in your project (if it doesn't exist) and paste in the orchestrator from [`examples/vscode/copilot-instructions.md`](examples/vscode/copilot-instructions.md):
 
-Recommended User prompt path:
-- macOS: `~/Library/Application Support/Code/User/prompts/sdd-orchestrator.instructions.md`
-- Linux: `~/.config/Code/User/prompts/sdd-orchestrator.instructions.md`
-- Windows: `%APPDATA%\Code\User\prompts\sdd-orchestrator.instructions.md`
+```bash
+cp examples/vscode/copilot-instructions.md .github/copilot-instructions.md
+```
 
-Alternatively, use VS Code's custom instructions setting:
-1. Open Settings (`Cmd+,` / `Ctrl+,`)
-2. Search for `github.copilot.chat.codeGeneration.instructions`
-3. Add the SDD orchestrator instructions
-
-If you also configure MCP at user level, use:
-- macOS: `~/Library/Application Support/Code/User/mcp.json`
-- Linux: `~/.config/Code/User/mcp.json`
-- Windows: `%APPDATA%\Code\User\mcp.json`
+VS Code Copilot automatically reads `.github/copilot-instructions.md` as project-level instructions. No settings changes required.
 
 **3. Verify:**
 
-Open VS Code, open the Chat panel (Ctrl+Cmd+I / Ctrl+Alt+I), and type `/sdd-init`.
+Open VS Code, open the Chat panel (Ctrl+Cmd+I / Ctrl+Alt+I), select **Agent** mode, and type `/sdd-init`.
 
-> **Note:** VS Code Copilot supports agent mode with tool use. Skills work as context files. For true sub-agent delegation with fresh context windows, use Claude Code or OpenCode.
+> **Note:** VS Code Copilot supports agent mode with tool use. Skills work as context files in `.github/skills/`. For true sub-agent delegation with fresh context windows, use Claude Code, OpenCode, or GitHub Copilot CLI.
 
 ---
 
-### Antigravity
+### GitHub Copilot CLI
+
+GitHub Copilot CLI is a terminal-native AI assistant with **full sub-agent delegation** via `/fleet`. Unlike VS Code Copilot (which runs skills inline), Copilot CLI spawns parallel sub-agents — each with fresh context — just like Claude Code and OpenCode. It also supports autopilot mode, `/plan` mode, infinite sessions, and `/delegate` for cloud-based async work.
+
+**1. Install skills and Engram instructions:**
+
+```bash
+./scripts/install.sh  # Choose option 6 — GitHub Copilot CLI
+```
+
+This copies skills to `.github/skills/` and installs the Engram memory protocol to `.github/instructions/engram.instructions.md`. Copilot CLI auto-discovers both locations.
+
+**2. Add orchestrator instructions:**
+
+```bash
+cp examples/copilot-cli/copilot-instructions.md .github/copilot-instructions.md
+```
+
+Or for auto-discovery without modifying `copilot-instructions.md`, copy `AGENTS.md` to your project root:
+
+```bash
+cp examples/copilot-cli/AGENTS.md AGENTS.md
+```
+
+Copilot CLI reads instructions in this order: `~/.copilot/copilot-instructions.md` (global) → `.github/copilot-instructions.md` → `.github/instructions/**/*.instructions.md` → `AGENTS.md`.
+
+**3. Verify:**
+
+```bash
+copilot  # Start Copilot CLI in your project
+```
+
+Then type `/sdd-init`. For complex features, consider starting in plan mode (press `Shift+Tab`) before running `/sdd-new`.
+
+**Using `/fleet` for parallel SDD phases:**
+
+```
+/fleet Run two sub-agents in parallel:
+1. Read .github/skills/sdd-spec/SKILL.md and run the Spec Writer for change "add-dark-mode"
+2. Read .github/skills/sdd-design/SKILL.md and run the Designer for change "add-dark-mode"
+```
+
+**Using autopilot for sdd-apply:**
+
+```bash
+# Start with all permissions, 10-step limit
+copilot --autopilot --yolo --max-autopilot-continues 10
+# Then: /sdd-apply add-dark-mode
+```
+
+**Session management tips:**
+- Use `/new` or `/clear` between unrelated changes to keep context focused
+- Check session state with `/session`, view checkpoints with `/session checkpoints`
+- Use `/delegate` to offload tangential tasks (docs, separate refactors) asynchronously
+- After context compaction, SDD state recovers automatically from Engram
+
+> **Note:** GitHub Copilot CLI has full sub-agent support via `/fleet` (parallel phases with fresh context), autopilot mode, and infinite sessions. The Engram memory protocol (`.github/instructions/engram.instructions.md`) is auto-loaded by Copilot CLI, enabling SDD state to survive context compaction and `/compact` operations.
 
 [Antigravity](https://antigravity.google) is Google's AI-first IDE with native skill support. It has its own skill and rule system separate from VS Code.
 
@@ -616,21 +664,19 @@ Open Antigravity and type `/sdd-init` in the agent panel.
 
 ### Cursor
 
-**1. Copy skills to project or global:**
+**1. Install skills globally:**
 
 ```bash
-# Global
-./scripts/install.sh  # Choose option 3: Cursor
-
-# Or per-project
-cp -r skills/_shared skills/sdd-* ./your-project/skills/
+./scripts/install.sh  # Choose option 7: Cursor
 ```
+
+This installs to `~/.cursor/skills/` (macOS/Linux) or `%USERPROFILE%\.cursor\skills\` (Windows). The `.cursorrules` example references this global path via `~/.cursor/skills/_shared/`.
 
 **2. Add orchestrator to `.cursorrules`:**
 
 Append the contents of [`examples/cursor/.cursorrules`](examples/cursor/.cursorrules) to your project's `.cursorrules` file.
 
-**Note:** Cursor doesn't have a Task tool for true sub-agent delegation. The skills still work — Cursor reads them as instructions — but the orchestrator runs inline rather than delegating to fresh-context sub-agents. For the best sub-agent experience, use Claude Code or OpenCode.
+**Note:** Cursor doesn't have a Task tool for true sub-agent delegation. The skills still work — Cursor reads them as instructions — but the orchestrator runs inline rather than delegating to fresh-context sub-agents. For the best sub-agent experience, use Claude Code, OpenCode, or GitHub Copilot CLI.
 
 ---
 
@@ -644,6 +690,7 @@ The skills are pure Markdown. Any AI assistant that can read files can use them.
 
 **3. Adapt the sub-agent pattern:**
 - If your tool has a Task/sub-agent mechanism → use the pattern from `examples/claude-code/CLAUDE.md`
+- If your tool has `/fleet` or similar parallel delegation → adapt `examples/copilot-cli/copilot-instructions.md`
 - If not → the orchestrator reads the skills inline (still works, just uses more context)
 
 ---
@@ -698,6 +745,9 @@ agent-teams-lite/
 │   ├── gemini-cli/GEMINI.md
 │   ├── codex/agents.md
 │   ├── vscode/copilot-instructions.md
+│   ├── copilot-cli/
+│   │   ├── copilot-instructions.md    ← Orchestrator with /fleet + autopilot support
+│   │   └── AGENTS.md                 ← Auto-discovered entry point (alternative)
 │   ├── antigravity/sdd-orchestrator.md
 │   └── cursor/.cursorrules
 └── scripts/

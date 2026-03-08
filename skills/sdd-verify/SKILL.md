@@ -23,10 +23,10 @@ From the orchestrator:
 
 ## Execution and Persistence Contract
 
-Read and follow `skills/_shared/persistence-contract.md` for mode resolution rules.
+Read and follow `_shared/persistence-contract.md` (located in the `_shared/` directory alongside these skill files) for mode resolution rules.
 
-- If mode is `engram`: Read and follow `skills/_shared/engram-convention.md`. Artifact type: `verify-report`. Retrieve `proposal`, `spec`, `design`, and `tasks` as dependencies.
-- If mode is `openspec`: Read and follow `skills/_shared/openspec-convention.md`. Save to `openspec/changes/{change-name}/verify-report.md`.
+- If mode is `engram`: Read and follow `_shared/engram-convention.md`. Artifact type: `verify-report`. Retrieve `proposal`, `spec`, `design`, and `tasks` as dependencies.
+- If mode is `openspec`: Read and follow `_shared/openspec-convention.md`. Save to `openspec/changes/{change-name}/verify-report.md`.
 - If mode is `none`: Return the verification report inline only. Never write files.
 
 ## What to Do
@@ -170,7 +170,7 @@ A spec scenario is only considered COMPLIANT when there is a test that passed pr
 
 ### Step 6: Persist Verification Report
 
-Persist the report according to the resolved `artifact_store.mode`, following the conventions in `skills/_shared/`:
+Persist the report according to the resolved `artifact_store.mode`, following the conventions in `_shared/`:
 
 - **engram**: Use `engram-convention.md` — artifact type `verify-report`
 - **openspec**: Write to `openspec/changes/{change-name}/verify-report.md`

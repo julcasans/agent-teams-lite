@@ -21,13 +21,19 @@ From the orchestrator:
 
 ## Execution and Persistence Contract
 
-Read and follow `skills/_shared/persistence-contract.md` for mode resolution rules.
+Read and follow `_shared/persistence-contract.md` (located in the `_shared/` directory alongside these skill files) for mode resolution rules.
 
-- If mode is `engram`: Read and follow `skills/_shared/engram-convention.md`. Artifact type: `archive-report`. Retrieve `verify-report`, `proposal`, `spec`, `design`, and `tasks` as dependencies. Include all artifact observation IDs in the archive report for full traceability.
-- If mode is `openspec`: Read and follow `skills/_shared/openspec-convention.md`. Perform merge and archive folder moves.
+- If mode is `engram`: Read and follow `_shared/engram-convention.md`. Artifact type: `archive-report`. Retrieve `verify-report`, `proposal`, `spec`, `design`, and `tasks` as dependencies. Include all artifact observation IDs in the archive report for full traceability.
+- If mode is `openspec`: Read and follow `_shared/openspec-convention.md`. Perform merge and archive folder moves.
 - If mode is `none`: Return closure summary only. Do not perform archive file operations.
 
 ## What to Do
+
+> **Mode-conditional:** Steps 1–3 only apply in `openspec` mode. In `engram` mode, skip to [Engram Mode Steps](#engram-mode-steps). In `none` mode, return a closure summary only.
+
+---
+
+### openspec Mode Steps
 
 ### Step 1: Sync Delta Specs to Main Specs
 
@@ -78,7 +84,7 @@ Confirm:
 - [ ] Archive contains all artifacts (proposal, specs, design, tasks)
 - [ ] Active changes directory no longer has this change
 
-### Step 4: Return Summary
+### Step 4: Return Summary (openspec mode)
 
 Return to the orchestrator:
 
@@ -106,6 +112,60 @@ The following specs now reflect the new behavior:
 ### SDD Cycle Complete
 The change has been fully planned, implemented, verified, and archived.
 Ready for the next change.
+```
+
+---
+
+### Engram Mode Steps
+
+#### Step 1: Retrieve All Change Artifacts
+
+Use the two-step recovery protocol from `_shared/engram-convention.md` to retrieve all artifacts for this change:
+
+```
+mem_search("sdd/{change-name}/proposal") → get ID → mem_get_observation(id)
+mem_search("sdd/{change-name}/spec")     → get ID → mem_get_observation(id)
+mem_search("sdd/{change-name}/design")   → get ID → mem_get_observation(id)
+mem_search("sdd/{change-name}/tasks")    → get ID → mem_get_observation(id)
+mem_search("sdd/{change-name}/verify-report") → get ID → mem_get_observation(id)
+```
+
+#### Step 2: Save Archive Report
+
+Save the archive-report artifact to Engram with all observation IDs for full traceability:
+
+```
+mem_save(
+  title: "sdd/{change-name}/archive-report",
+  topic_key: "sdd/{change-name}/archive-report",
+  type: "architecture",
+  project: "{project}",
+  content: "# Archive Report: {change-name}\n\n## Status\nArchived on {ISO date}\n\n## Artifacts\n- proposal ID: {id}\n- spec ID: {id}\n- design ID: {id}\n- tasks ID: {id}\n- verify-report ID: {id}\n\n## Summary\n{executive summary of the change}"
+)
+```
+
+#### Step 3: Return Summary (engram mode)
+
+Return to the orchestrator:
+
+```markdown
+## Change Archived (engram)
+
+**Change**: {change-name}
+**Archive report saved to Engram**
+
+### Artifact Lineage
+| Artifact | Engram ID |
+|----------|-----------|
+| proposal | {id} |
+| spec | {id} |
+| design | {id} |
+| tasks | {id} |
+| verify-report | {id} |
+| archive-report | {id} |
+
+### SDD Cycle Complete
+All artifacts are persisted in Engram. Ready for the next change.
 ```
 
 ## Rules

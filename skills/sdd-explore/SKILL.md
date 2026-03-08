@@ -21,10 +21,10 @@ The orchestrator will give you:
 
 ## Execution and Persistence Contract
 
-Read and follow `skills/_shared/persistence-contract.md` for mode resolution rules.
+Read and follow `_shared/persistence-contract.md` (located in the `_shared/` directory alongside these skill files) for mode resolution rules.
 
-- If mode is `engram`: Read and follow `skills/_shared/engram-convention.md`. Artifact type: `explore`. If no change name (standalone explore), use slug: `sdd/explore/{topic-slug}`.
-- If mode is `openspec`: Read and follow `skills/_shared/openspec-convention.md`.
+- If mode is `engram`: Read and follow `_shared/engram-convention.md`. Artifact type: `explore`. If no change name (standalone explore), use slug: `sdd/explore/{topic-slug}`.
+- If mode is `openspec`: Read and follow `_shared/openspec-convention.md`.
 - If mode is `none`: Return result only.
 
 ### Retrieving Context
@@ -70,12 +70,13 @@ If there are multiple approaches, compare them:
 
 ### Step 4: Optionally Save Exploration
 
-If the orchestrator provided a change name (i.e., this exploration is part of `/sdd-new`), save your analysis to:
+If the orchestrator provided a change name (i.e., this exploration is part of `/sdd-new`):
 
-```
-openspec/changes/{change-name}/
-└── exploration.md          ← You create this
-```
+**If mode is `openspec`:** Write your analysis to `openspec/changes/{change-name}/exploration.md`.
+
+**If mode is `engram`:** The artifact is already saved to Engram via the Execution Contract above — do not create any filesystem files.
+
+**If mode is `none`:** Skip file creation — just return the analysis.
 
 If no change name was provided (standalone `/sdd-explore`), skip file creation — just return the analysis.
 
